@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+
+import subprocess, re, os, matplotlib.pyplot as plt, csv
+from scapy.all import sniff
+
+# --- إعداد مجلد الحفظ ---
+user_home = os.path.expanduser("~" if os.getenv("SUDO_USER") is None else f"/home/{os.getenv('SUDO_USER')}")
+output_dir = os.path.join(user_home, "netscan")
+os.makedirs(output_dir, exist_ok=True)
+
+# --- اكتشاف النطاق ---
+def get_network_prefix():
+    ip = subprocess.getoutput("hostname -I").split()[0]
+    return ".".join(ip.split(".")[:3])
+
+network_prefix = get_network_prefix()
+
+# --- تشغيل nmap ---
+nmap_output = subprocess.getoutput(f"nmap -sn {network_prefix}.0/24")
+hosts, current_ip = [], None
+
+for line in nmap_output.splitlines():
+    ip_match = re.search(r"Nmap scan report for (.+)", line)
+    latency_match = re.search(r"Host is up \((.+) latency\)", line)
+    mac_match = re.search(r"MAC Address: ([0-9A-F:]{17}) \((.+)\)", line)
+
+    if ip_match:
+        current_ip = ip_match.group(1)
+        hosts.append({"ip": current_ip, "mac": None, "vendor": None, "latency": None})
+    if latency_match and hosts:
+        hosts[-1]["latency"] = latency_match.group(1)
+    if mac_match and hosts:
+        hosts[-1]["mac"] = mac_match.group(1)
+        hosts[-1]["vendor"] = mac_match.group(2)
+
+# --- تحويل latency إلى رقم ---
+def latency_value(lat):
+    try:
+        return float(lat.replace("s", "")) if lat and lat != "N/A" else None
+    except:
+        return None
+
+# --- حفظ النتائج النصية ---
+results_file = os.path.join(output_dir, "netscan_results.txt")
+with open(results_file, "w") as f:
+    for h in hosts:
+        line = f"IP: {h['ip']} | MAC: {h['mac'] or '??:??:??:??:??:??'} | Vendor: {h['vendor'] or 'Unknown'} | Latency: {h['latency'] or 'N/A'}"
+        print(line)
+        f.write(line + "\n")
+
+# --- رسم بياني للقرب من الراوتر ---
+ips = [h["ip"] for h in hosts if latency_value(h["latency"]) is not None]
+latencies = [latency_value(h["latency"]) for h in hosts if latency_value(h["latency"]) is not None]
+
+if ips:
+    plt.bar(ips, latencies, color="skyblue")
+    plt.xlabel("IP Address")
+    plt.ylabel("Latency (seconds)")
+    plt.title("Devices sorted by latency (closer to router = lower latency)")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    latency_file = os.path.join(output_dir, "netscan_latency.png")
+    plt.savefig(latency_file)
+    plt.close()
+    os.system(f"xdg-open {latency_file}")
+
+# --- مراقبة الترافيك ---
+traffic = {}
+def count_packets(pkt):
+    if pkt.haslayer("IP"):
+        ip = pkt["IP"].src
+        traffic[ip] = traffic.get(ip, 0) + 1
+
+try:
+    duration = int(input("\n⏳ أدخل مدة مراقبة الترافيك بالثواني (مثلاً 30): "))
+except:
+    duration = 30
+
+iface = input("🌐 أدخل اسم واجهة الشبكة (مثلاً eth0 أو wlan0): ").strip() or None
+
+print(f"\n⏳ مراقبة الترافيك لمدة {duration} ثانية على الواجهة {iface or 'الافتراضية'}...")
+sniff(iface=iface, prn=count_packets, timeout=duration)  # بدون فلتر لتلقط كل شيء
+
+# --- حفظ النتائج في CSV ---
+csv_file = os.path.join(output_dir, "netscan_traffic.csv")
+with open(csv_file, "w", newline="") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["IP Address", "Packets"])
+    if traffic:
+        for ip, count in traffic.items():
+            writer.writerow([ip, count])
+    else:
+        writer.writerow(["No traffic captured", 0])
+
+print(f"📑 ملف CSV في {csv_file}")
+
+# --- رسم بياني للترافيك ---
+plt.bar(list(traffic.keys()) if traffic else ["No traffic"],
+        list(traffic.values()) if traffic else [0],
+        color="orange")
+plt.xlabel("IP Address")
+plt.ylabel("Packets captured")
+plt.title("Most active devices (traffic usage)")
+plt.xticks(rotation=45)
+plt.tight_layout()
+traffic_file = os.path.join(output_dir, "netscan_traffic.png")
+plt.savefig(traffic_file)
+plt.close()
+os.system(f"xdg-open {traffic_file}")
+
+# --- تنبيه للنشاط المفرط ---
+if traffic:
+    for ip, count in traffic.items():
+        if count > 100:
+            print(f"⚠️ تنبيه: الجهاز {ip} تجاوز 100 حزمة ({count} packets)")
+
+# --- عرض المسارات النهائية ---
+print(f"\n✅ النتائج النصية في {results_file}")
+print(f"📊 رسم بياني للقرب في {output_dir}/netscan_latency.png")
+print(f"📊 رسم بياني للترافيك في {traffic_file}")
+print(f"📑 ملف CSV في {csv_file}")
