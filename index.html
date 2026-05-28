@@ -210,7 +210,7 @@
   </div>
 </div>
 <script>
-  const API_URL="http://127.0.0.1:5000";
+  const API_URL="https://webscan-api.onrender.com";
   let lang='ar',selectedScan=null,selectedLevel=null,allResults=[],activeFilter='all',lastScanData=null;
   const T={
     ar:{title:'فاحص الأمان',s1:'أدخل رابط الموقع',s1sub:'أدخل رابط الموقع المراد فحصه',s2:'اختر نوع الفحص',s2sub:'حدد نوع الفحص الأمني',s3:'مستوى التقرير',s3sub:'اختر مستوى تفصيل التقرير',vulnTitle:'فحص الثغرات',cryptoTitle:'فحص التشفير',bothTitle:'الفحص الشامل',lvlQ:'سريع — المشاكل فقط',lvlD:'تفصيلي — كل شيء',scan:'ابدأ الفحص',back:'رجوع',next:'التالي →',newScan:'فحص جديد',pdf:'تحميل PDF',scanning:'جاري الفحص الحقيقي...',resTitle:'نتائج الفحص',statC:'حرجة',statM:'متوسطة',statL:'منخفضة',statS:'آمن',fix:'التوصية',urlErr:'أدخل رابط صحيح مثل https://example.com',filterAll:'الكل',safe:'✅ آمن',warn:'⚠️ تحذيرات',danger:'🚨 خطر',apiErr:'تعذر الاتصال بخادم الفحص.',scanSteps:['التحقق من الاتصال','فحص HTTP Headers','اختبار SQL Injection','اختبار XSS','فحص الملفات والمجلدات','فحص SSL/TLS','فحص المنافذ','تحليل النتائج']},
