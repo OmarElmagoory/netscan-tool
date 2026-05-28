@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>فاحص الأمان | Web Security Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--border:#1e3a5f;--accent:#00d4ff;--danger:#ff3b5c;--warn:#ffb340;--safe:#00e676;--text:#e2e8f0;--muted:#64748b; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;min-height:100vh;}
+  body.en{font-family:'IBM Plex Mono',monospace;direction:ltr;}
+  body.en *{direction:ltr;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  .container{max-width:900px;margin:0 auto;padding:40px 20px;position:relative;z-index:1;}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:48px;flex-wrap:wrap;gap:16px;}
+  .logo{display:flex;align-items:center;gap:12px;}
+  .logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#0066cc);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(0,212,255,0.3);}
+  .logo-text h1{font-size:20px;font-weight:900;color:var(--accent);}
+  .logo-text p{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+  .lang-toggle{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .lang-btn{padding:8px 18px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;transition:all 0.2s;}
+  .lang-btn.active{background:var(--accent);color:#000;}
+  .steps-track{display:flex;align-items:center;justify-content:center;margin-bottom:40px;}
+  .step-dot{width:36px;height:36px;border-radius:50%;background:var(--surface);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--muted);transition:all 0.3s;font-family:'IBM Plex Mono',monospace;flex-shrink:0;}
+  .step-dot.active{background:var(--accent);border-color:var(--accent);color:#000;box-shadow:0 0 15px rgba(0,212,255,0.4);}
+  .step-dot.done{background:var(--safe);border-color:var(--safe);color:#000;}
+  .step-line{width:60px;height:2px;background:var(--border);}
+  .step-line.done{background:var(--safe);}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:20px;animation:fadeIn 0.4s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .card h2{font-size:18px;font-weight:700;margin-bottom:6px;}
+  .card .subtitle{font-size:13px;color:var(--muted);margin-bottom:24px;font-family:'IBM Plex Mono',monospace;}
+  .url-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;outline:none;transition:border-color 0.2s;direction:ltr;text-align:left;}
+  .url-input:focus{border-color:var(--accent);}
+  .url-input::placeholder{color:var(--muted);}
+  .options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+  .option-card{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all 0.2s;position:relative;}
+  .option-card:hover{border-color:var(--accent);}
+  .option-card.selected{border-color:var(--accent);background:rgba(0,212,255,0.05);}
+  .option-icon{font-size:24px;margin-bottom:10px;}
+  .option-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+  .option-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+  .check-badge{position:absolute;top:12px;left:12px;width:20px;height:20px;background:var(--accent);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:11px;color:#000;font-weight:700;}
+  body.en .check-badge{left:auto;right:12px;}
+  .option-card.selected .check-badge{display:flex;}
+  .level-options{display:flex;gap:10px;flex-wrap:wrap;}
+  .level-btn{flex:1;min-width:120px;padding:12px 20px;border:2px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--text);cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;transition:all 0.2s;text-align:center;}
+  .level-btn:hover{border-color:var(--accent);}
+  .level-btn.selected{border-color:var(--accent);background:rgba(0,212,255,0.08);color:var(--accent);}
+  .btn-primary{background:var(--accent);color:#000;border:none;border-radius:10px;padding:14px 28px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px;}
+  .btn-primary:hover{background:#00b8d9;transform:translateY(-1px);}
+  .btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:10px;padding:14px 28px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px;}
+  .btn-outline:hover{background:rgba(0,212,255,0.08);}
+  .btn-secondary{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:12px 24px;font-family:inherit;font-size:14px;cursor:pointer;transition:all 0.2s;}
+  .btn-secondary:hover{border-color:var(--text);color:var(--text);}
+  .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap;}
+  body.en .actions{justify-content:flex-start;flex-direction:row-reverse;}
+  .scan-progress{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center;}
+  .scan-ring{width:80px;height:80px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 24px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .scan-status{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--accent);}
+  .scan-sub{font-size:13px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+  .progress-bar{width:100%;height:4px;background:var(--border);border-radius:2px;margin-top:24px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#0066cc);border-radius:2px;transition:width 0.5s ease;width:0%;}
+  .scan-steps{margin-top:20px;}
+  .scan-step-item{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--muted);justify-content:flex-end;}
+  body.en .scan-step-item{justify-content:flex-start;flex-direction:row-reverse;}
+  .scan-step-item.active{color:var(--accent);}
+  .scan-step-item.done{color:var(--safe);}
+  .step-status{font-family:'IBM Plex Mono',monospace;font-size:12px;width:16px;}
+  .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+  .score-badge{display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:100px;font-weight:700;font-size:15px;font-family:'IBM Plex Mono',monospace;}
+  .score-badge.safe{background:rgba(0,230,118,0.1);color:var(--safe);border:1px solid var(--safe);}
+  .score-badge.warn{background:rgba(255,179,64,0.1);color:var(--warn);border:1px solid var(--warn);}
+  .score-badge.danger{background:rgba(255,59,92,0.1);color:var(--danger);border:1px solid var(--danger);}
+  .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+  .summary-stat{background:var(--surface2);border-radius:12px;padding:16px;text-align:center;}
+  .stat-num{font-size:28px;font-weight:900;font-family:'IBM Plex Mono',monospace;margin-bottom:4px;}
+  .stat-label{font-size:12px;color:var(--muted);}
+  .filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .filter-btn{padding:6px 14px;border-radius:100px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;transition:all 0.2s;}
+  .filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
+  .filter-btn.f-critical.active{background:var(--danger);border-color:var(--danger);color:#fff;}
+  .filter-btn.f-medium.active{background:var(--warn);border-color:var(--warn);color:#000;}
+  .filter-btn.f-low.active{background:#60a5fa;border-color:#60a5fa;color:#000;}
+  .filter-btn.f-safe.active{background:var(--safe);border-color:var(--safe);color:#000;}
+  .vuln-list{display:flex;flex-direction:column;gap:12px;}
+  .vuln-item{background:var(--surface2);border-radius:12px;padding:16px 20px;border-right:4px solid transparent;}
+  body.en .vuln-item{border-right:none;border-left:4px solid transparent;}
+  .vuln-item.critical{border-color:var(--danger);}
+  .vuln-item.medium{border-color:var(--warn);}
+  .vuln-item.low{border-color:#60a5fa;}
+  .vuln-item.safe{border-color:var(--safe);opacity:0.8;}
+  .vuln-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .vuln-name{font-weight:700;font-size:14px;}
+  .severity-tag{padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  .critical .severity-tag{background:rgba(255,59,92,0.15);color:var(--danger);}
+  .medium .severity-tag{background:rgba(255,179,64,0.15);color:var(--warn);}
+  .low .severity-tag{background:rgba(96,165,250,0.15);color:#60a5fa;}
+  .safe .severity-tag{background:rgba(0,230,118,0.15);color:var(--safe);}
+  .vuln-desc{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.6;}
+  .fix-label{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+  .fix-box{background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--accent);font-family:'IBM Plex Mono',monospace;direction:ltr;text-align:left;}
+  .error-box{background:rgba(255,59,92,0.1);border:1px solid var(--danger);border-radius:12px;padding:16px 20px;color:var(--danger);font-size:14px;margin-top:12px;}
+  .hidden{display:none !important;}
+  @media(max-width:600px){.summary-grid{grid-template-columns:repeat(2,1fr);}.options-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <div class="logo-text">
+        <h1 id="title-text">فاحص الأمان</h1>
+        <p>Web Security Scanner v2.0</p>
+      </div>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('ar')">العربية</button>
+      <button class="lang-btn" onclick="setLang('en')">English</button>
+    </div>
+  </header>
+  <div class="steps-track">
+    <div class="step-dot active" id="dot-1">1</div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step-dot" id="dot-2">2</div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step-dot" id="dot-3">3</div>
+    <div class="step-line" id="line-3"></div>
+    <div class="step-dot" id="dot-4">4</div>
+  </div>
+  <div id="step1" class="card">
+    <h2 id="s1-title">أدخل رابط الموقع</h2>
+    <p class="subtitle" id="s1-sub">Enter the target website URL</p>
+    <input class="url-input" id="urlInput" type="url" placeholder="https://example.com"/>
+    <div id="url-error" class="error-box hidden"></div>
+    <div class="actions"><button class="btn-primary" onclick="goStep2()" id="btn-next1">التالي →</button></div>
+  </div>
+  <div id="step2" class="card hidden">
+    <h2 id="s2-title">اختر نوع الفحص</h2>
+    <p class="subtitle" id="s2-sub">Choose the type of security scan</p>
+    <div class="options-grid">
+      <div class="option-card" onclick="selectScan('vuln')" id="opt-vuln">
+        <div class="check-badge">✓</div>
+        <div class="option-icon">🔍</div>
+        <div class="option-title" id="opt-vuln-title">فحص الثغرات</div>
+        <div class="option-desc">Headers, SQL, XSS, Directories</div>
+      </div>
+      <div class="option-card" onclick="selectScan('crypto')" id="opt-crypto">
+        <div class="check-badge">✓</div>
+        <div class="option-icon">🔐</div>
+        <div class="option-title" id="opt-crypto-title">فحص التشفير</div>
+        <div class="option-desc">SSL/TLS, Certificates, Protocols</div>
+      </div>
+      <div class="option-card" onclick="selectScan('both')" id="opt-both">
+        <div class="check-badge">✓</div>
+        <div class="option-icon">⚡</div>
+        <div class="option-title" id="opt-both-title">الفحص الشامل</div>
+        <div class="option-desc">Headers + SSL + SQL + XSS + Ports</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" onclick="goStep3()" id="btn-next2">التالي →</button>
+      <button class="btn-secondary" onclick="goStep(1)" id="btn-back2">رجوع</button>
+    </div>
+  </div>
+  <div id="step3" class="card hidden">
+    <h2 id="s3-title">مستوى التقرير</h2>
+    <p class="subtitle" id="s3-sub">Choose report detail level</p>
+    <div class="level-options">
+      <button class="level-btn" onclick="selectLevel('quick')" id="lvl-quick">⚡ <span id="lvl-q-text">سريع — المشاكل فقط</span></button>
+      <button class="level-btn" onclick="selectLevel('detailed')" id="lvl-detailed">📋 <span id="lvl-d-text">تفصيلي — كل شيء</span></button>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" onclick="startScan()" id="btn-scan">🛡️ <span id="btn-scan-text">ابدأ الفحص</span></button>
+      <button class="btn-secondary" onclick="goStep(2)" id="btn-back3">رجوع</button>
+    </div>
+  </div>
+  <div id="step4" class="scan-progress hidden">
+    <div class="scan-ring"></div>
+    <div class="scan-status" id="scan-status-text">جاري الفحص...</div>
+    <div class="scan-sub" id="scan-url-display"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="scan-steps" id="scanStepsList"></div>
+  </div>
+  <div id="step5" class="hidden">
+    <div class="card">
+      <div class="results-header">
+        <div>
+          <h2 id="res-title">نتائج الفحص</h2>
+          <p class="subtitle" id="res-url"></p>
+        </div>
+        <div class="score-badge" id="scoreBadge"></div>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-stat"><div class="stat-num" id="stat-critical" style="color:var(--danger)">0</div><div class="stat-label" id="stat-c-label">حرجة</div></div>
+        <div class="summary-stat"><div class="stat-num" id="stat-medium" style="color:var(--warn)">0</div><div class="stat-label" id="stat-m-label">متوسطة</div></div>
+        <div class="summary-stat"><div class="stat-num" id="stat-low" style="color:#60a5fa">0</div><div class="stat-label" id="stat-l-label">منخفضة</div></div>
+        <div class="summary-stat"><div class="stat-num" id="stat-safe" style="color:var(--safe)">0</div><div class="stat-label" id="stat-s-label">آمن</div></div>
+      </div>
+      <div class="filter-bar" id="filterBar"></div>
+      <div class="vuln-list" id="vulnList"></div>
+      <div class="actions" style="margin-top:24px">
+        <button class="btn-primary" onclick="resetAll()">🔄 <span id="btn-new-text">فحص جديد</span></button>
+        <button class="btn-outline" onclick="downloadPDF()">📄 <span id="btn-pdf-text">تحميل PDF</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const API_URL="http://127.0.0.1:5000";
+  let lang='ar',selectedScan=null,selectedLevel=null,allResults=[],activeFilter='all',lastScanData=null;
+  const T={
+    ar:{title:'فاحص الأمان',s1:'أدخل رابط الموقع',s1sub:'أدخل رابط الموقع المراد فحصه',s2:'اختر نوع الفحص',s2sub:'حدد نوع الفحص الأمني',s3:'مستوى التقرير',s3sub:'اختر مستوى تفصيل التقرير',vulnTitle:'فحص الثغرات',cryptoTitle:'فحص التشفير',bothTitle:'الفحص الشامل',lvlQ:'سريع — المشاكل فقط',lvlD:'تفصيلي — كل شيء',scan:'ابدأ الفحص',back:'رجوع',next:'التالي →',newScan:'فحص جديد',pdf:'تحميل PDF',scanning:'جاري الفحص الحقيقي...',resTitle:'نتائج الفحص',statC:'حرجة',statM:'متوسطة',statL:'منخفضة',statS:'آمن',fix:'التوصية',urlErr:'أدخل رابط صحيح مثل https://example.com',filterAll:'الكل',safe:'✅ آمن',warn:'⚠️ تحذيرات',danger:'🚨 خطر',apiErr:'تعذر الاتصال بخادم الفحص.',scanSteps:['التحقق من الاتصال','فحص HTTP Headers','اختبار SQL Injection','اختبار XSS','فحص الملفات والمجلدات','فحص SSL/TLS','فحص المنافذ','تحليل النتائج']},
+    en:{title:'Security Scanner',s1:'Enter Target URL',s1sub:'Enter the website URL to scan',s2:'Select Scan Type',s2sub:'Choose security analysis type',s3:'Report Level',s3sub:'Choose report detail level',vulnTitle:'Vulnerability Scan',cryptoTitle:'Encryption Scan',bothTitle:'Full Scan',lvlQ:'Quick — Issues only',lvlD:'Detailed — Everything',scan:'Start Scan',back:'Back',next:'Next →',newScan:'New Scan',pdf:'Download PDF',scanning:'Running real scan...',resTitle:'Scan Results',statC:'Critical',statM:'Medium',statL:'Low',statS:'Safe',fix:'FIX',urlErr:'Enter a valid URL like https://example.com',filterAll:'All',safe:'✅ Secure',warn:'⚠️ Warnings',danger:'🚨 Danger',apiErr:'Cannot connect to scan server.',scanSteps:['Checking connectivity','Scanning HTTP Headers','Testing SQL Injection','Testing XSS','Scanning directories','Checking SSL/TLS','Scanning ports','Compiling results']}
+  };
+  function t(k){return T[lang][k]||k;}
+  function setLang(l){lang=l;document.body.className=l==='en'?'en':'';document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';document.querySelectorAll('.lang-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&l==='ar')||(i===1&&l==='en')));applyAll();if(allResults.length)renderResults();}
+  function applyAll(){const ids={'title-text':'title','s1-title':'s1','s1-sub':'s1sub','s2-title':'s2','s2-sub':'s2sub','s3-title':'s3','s3-sub':'s3sub','opt-vuln-title':'vulnTitle','opt-crypto-title':'cryptoTitle','opt-both-title':'bothTitle','lvl-q-text':'lvlQ','lvl-d-text':'lvlD','btn-scan-text':'scan','btn-new-text':'newScan','btn-pdf-text':'pdf','btn-back2':'back','btn-back3':'back','btn-next1':'next','btn-next2':'next','scan-status-text':'scanning','res-title':'resTitle','stat-c-label':'statC','stat-m-label':'statM','stat-l-label':'statL','stat-s-label':'statS'};for(const[id,key]of Object.entries(ids)){const el=document.getElementById(id);if(el)el.textContent=t(key);}}
+  function setDot(n,state){const d=document.getElementById('dot-'+n);d.className='step-dot '+(state||'');d.textContent=state==='done'?'✓':n;}
+  function goStep(n){[1,2,3].forEach(i=>{document.getElementById('step'+i).classList.add('hidden');const line=document.getElementById('line-'+i);if(i<n){setDot(i,'done');if(line)line.classList.add('done');}else if(i===n){setDot(i,'active');}else{setDot(i,'');if(line)line.classList.remove('done');}});if(n<=3)document.getElementById('step'+n).classList.remove('hidden');}
+  function goStep2(){const url=document.getElementById('urlInput').value.trim();const err=document.getElementById('url-error');if(!url||(!url.startsWith('http://')&&!url.startsWith('https://'))){err.textContent=t('urlErr');err.classList.remove('hidden');return;}err.classList.add('hidden');goStep(2);}
+  function goStep3(){if(selectedScan)goStep(3);}
+  function selectScan(type){selectedScan=type;['vuln','crypto','both'].forEach(t=>document.getElementById('opt-'+t).classList.toggle('selected',t===type));}
+  function selectLevel(lvl){selectedLevel=lvl;['quick','detailed'].forEach(l=>document.getElementById('lvl-'+l).classList.toggle('selected',l===lvl));}
+  async function startScan(){
+    if(!selectedLevel)return;
+    const url=document.getElementById('urlInput').value.trim();
+    [1,2,3].forEach(i=>{document.getElementById('step'+i).classList.add('hidden');setDot(i,'done');document.getElementById('line-'+i)?.classList.add('done');});
+    document.getElementById('step5').classList.add('hidden');
+    document.getElementById('step4').classList.remove('hidden');
+    setDot(4,'active');
+    document.getElementById('scan-url-display').textContent=url;
+    const steps=t('scanSteps');
+    const listEl=document.getElementById('scanStepsList');
+    listEl.innerHTML=steps.map((s,i)=>`<div class="scan-step-item" id="sstep-${i}"><span class="step-status" id="sstatus-${i}">○</span>${s}</div>`).join('');
+    let si=0;
+    const fill=document.getElementById('progressFill');
+    const iv=setInterval(()=>{
+      if(si>0){document.getElementById('sstep-'+(si-1)).className='scan-step-item done';document.getElementById('sstatus-'+(si-1)).textContent='✓';}
+      if(si<steps.length){document.getElementById('sstep-'+si).className='scan-step-item active';document.getElementById('sstatus-'+si).textContent='▶';fill.style.width=((si+1)/steps.length*85)+'%';si++;}
+    },900);
+    try{
+      const res=await fetch(`${API_URL}/scan`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,scan_type:selectedScan})});
+      clearInterval(iv);fill.style.width='100%';
+      if(si>0){document.getElementById('sstep-'+(si-1)).className='scan-step-item done';document.getElementById('sstatus-'+(si-1)).textContent='✓';}
+      if(!res.ok)throw new Error('Server error');
+      const data=await res.json();
+      lastScanData=data;
+      setTimeout(()=>showResults(data),500);
+    }catch(err){
+      clearInterval(iv);
+      document.getElementById('step4').classList.add('hidden');
+      goStep(1);
+      const e=document.getElementById('url-error');
+      e.textContent=t('apiErr');e.classList.remove('hidden');
+    }
+  }
+  function showResults(data){
+    document.getElementById('step4').classList.add('hidden');
+    document.getElementById('step5').classList.remove('hidden');
+    const s=data.summary;
+    document.getElementById('stat-critical').textContent=s.critical;
+    document.getElementById('stat-medium').textContent=s.medium;
+    document.getElementById('stat-low').textContent=s.low;
+    document.getElementById('stat-safe').textContent=s.safe;
+    document.getElementById('res-url').textContent=data.url;
+    const badge=document.getElementById('scoreBadge');
+    if(s.critical>0){badge.className='score-badge danger';badge.textContent=t('danger');}
+    else if(s.medium>0){badge.className='score-badge warn';badge.textContent=t('warn');}
+    else{badge.className='score-badge safe';badge.textContent=t('safe');}
+    allResults=data.results;activeFilter='all';
+    renderFilterBar();renderResults();
+  }
+  function renderFilterBar(){
+    const bar=document.getElementById('filterBar');
+    const c={all:allResults.length,critical:0,medium:0,low:0,safe:0};
+    allResults.forEach(r=>{if(c[r.severity]!==undefined)c[r.severity]++;});
+    bar.innerHTML=[{key:'all',label:t('filterAll'),cls:''},{key:'critical',label:`🚨 ${t('statC')} (${c.critical})`,cls:'f-critical'},{key:'medium',label:`⚠️ ${t('statM')} (${c.medium})`,cls:'f-medium'},{key:'low',label:`ℹ️ ${t('statL')} (${c.low})`,cls:'f-low'},{key:'safe',label:`✅ ${t('statS')} (${c.safe})`,cls:'f-safe'}].map(f=>`<button class="filter-btn ${f.cls} ${activeFilter===f.key?'active':''}" onclick="filterResults('${f.key}')">${f.label}</button>`).join('');
+  }
+  function filterResults(f){activeFilter=f;renderFilterBar();renderResults();}
+  function renderResults(){
+    let filtered=activeFilter==='all'?allResults:allResults.filter(r=>r.severity===activeFilter);
+    if(selectedLevel==='quick')filtered=filtered.filter(r=>r.severity!=='safe');
+    document.getElementById('vulnList').innerHTML=filtered.map(v=>`<div class="vuln-item ${v.severity}"><div class="vuln-header"><div class="vuln-name">${lang==='ar'?v.name_ar:v.name_en}</div><span class="severity-tag">${v.severity.toUpperCase()}</span></div><div class="vuln-desc">${lang==='ar'?v.desc_ar:v.desc_en}</div>${v.fix?`<div class="fix-label">${t('fix')}</div><div class="fix-box">${v.fix}</div>`:''}</div>`).join('');
+  }
+  async function downloadPDF(){
+    if(!lastScanData)return;
+    try{
+      const res=await fetch(`${API_URL}/report`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...lastScanData,lang})});
+      const blob=await res.blob();
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='webscan_report.pdf';
+      a.click();
+    }catch(e){alert('PDF error. Make sure backend is running.');}
+  }
+  function resetAll(){
+    selectedScan=null;selectedLevel=null;allResults=[];lastScanData=null;
+    document.getElementById('urlInput').value='';
+    document.getElementById('url-error').classList.add('hidden');
+    document.getElementById('step5').classList.add('hidden');
+    ['vuln','crypto','both'].forEach(t=>document.getElementById('opt-'+t).classList.remove('selected'));
+    ['quick','detailed'].forEach(l=>document.getElementById('lvl-'+l).classList.remove('selected'));
+    [1,2,3,4].forEach(i=>{setDot(i,i===1?'active':'');document.getElementById('line-'+i)?.classList.remove('done');});
+    document.getElementById('step1').classList.remove('hidden');
+    [2,3].forEach(i=>document.getElementById('step'+i).classList.add('hidden'));
+  }
+  applyAll();
+</script>
+</body>
+</html>
